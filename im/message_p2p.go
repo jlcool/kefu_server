@@ -197,7 +197,7 @@ func MessageP2P(message models.Message) {
 		// 符合
 		if isTransfer {
 			var admins []models.Admin
-			_, _ = o.Raw("SELECT a.*, IFNULL(c.count,0) AS `count` FROM admin as a LEFT  JOIN (SELECT to_account,COUNT(*) AS count FROM `contact` WHERE is_session_end = 0 GROUP BY to_account) c ON a.id = c.to_account WHERE a.`online` = 1 ORDER BY c.count").QueryRows(&admins)
+			_, _ = o.Raw("SELECT a.*, IFNULL(c.count,0) AS `count` FROM admin as a LEFT  JOIN (SELECT to_account,COUNT(*) AS count FROM `contact` WHERE is_session_end = 0 GROUP BY to_account) c ON a.id = c.to_account WHERE a.`online` = 1 and a.`to_account`!=1 ORDER BY c.count").QueryRows(&admins)
 			if len(admins) <= 0 {
 				messageContent = robotData.NoServices
 			} else {
