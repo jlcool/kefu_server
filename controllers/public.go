@@ -67,10 +67,27 @@ func (c *PublicController) Register() {
 			return
 		}
 
-		user = models.User{ID: sessionRequest.AccountID, UID: sessionRequest.UID, Platform: sessionRequest.Platform, Address: sessionRequest.Address}
+		//user = models.User{ID: sessionRequest.AccountID, UID: sessionRequest.UID, Platform: sessionRequest.Platform, Address: sessionRequest.Address,NickName:sessionRequest.NickName,Avatar:sessionRequest.Avatar}
+		
+		if sessionRequest.UID > 0 {
+			o.QueryTable(new(models.User)).Filter("uid", sessionRequest.UID).One(&user)
+			if user.ID<=0 {
+				o.QueryTable(new(models.User)).Filter("id", sessionRequest.AccountID).One(&user)
+			}
 
+			// if err := o.QueryTable(new(models.User)).Filter("uid", sessionRequest.UID).One(&user1); err != nil {
+			// 	if err := o.QueryTable(new(models.User)).Filter("id", sessionRequest.AccountID).One(&user1); err == nil {
+			// 		user=&user1
+			// 	}
+			// }else{
+			// 	user=&user1
+			// }
+		}else{
+			o.QueryTable(new(models.User)).Filter("id", sessionRequest.AccountID).One(&user);
+		}
+ 
 		/// old user
-		if err := o.QueryTable(new(models.User)).Filter("id", sessionRequest.AccountID).One(&user); err == nil {
+		if user.ID>0 {
 			fetchResult, fetchError = im.GetMiMcToken(strconv.FormatInt(user.ID, 10))
 			if err := json.Unmarshal([]byte(fetchResult), &imToken); err != nil {
 				c.Data["json"] = utils.ResponseError(c.Ctx, "注册失败!", &err)
@@ -78,21 +95,30 @@ func (c *PublicController) Register() {
 				return
 			}
 			user.Online = 1
+			if sessionRequest.UID>0 {
 			user.UID = sessionRequest.UID
-			user.Address = sessionRequest.Address
+			}
 			user.Address = sessionRequest.Address
 			user.Platform = sessionRequest.Platform
+			if sessionRequest.NickName!="" {
+				user.NickName=sessionRequest.NickName
+			}
 			user.LastActivity = time.Now().Unix()
 			user.Token = imToken.Data.Token
 			logs.Info("imToken.Data.Token==", imToken.Data.Token)
 			_, _ = o.Update(&user)
 		} else {
 			// create new user
+			user.UID=sessionRequest.UID
+			user.Platform=sessionRequest.Platform
 			user.CreateAt = time.Now().Unix()
 			user.ID = 0
 			user.Online = 1
 			user.LastActivity = time.Now().Unix()
 			user.Address = sessionRequest.Address
+			user.Avatar=sessionRequest.Avatar
+			user.NickName=sessionRequest.NickName
+			user.Remarks=fmt.Sprintf("uid:%d", sessionRequest.UID)
 			if accountID, err := o.Insert(&user); err == nil {
 				fetchResult, fetchError = im.GetMiMcToken(strconv.FormatInt(accountID, 10))
 				if err := json.Unmarshal([]byte(fetchResult), &imToken); err != nil {
@@ -101,7 +127,9 @@ func (c *PublicController) Register() {
 					return
 				}
 				user.Token = imToken.Data.Token
-				user.NickName = "访客" + strconv.FormatInt(accountID, 10)
+				if user.NickName == "" {
+					user.NickName = "访客" + strconv.FormatInt(accountID, 10)
+				}
 				_, _ = o.Update(&user)
 			} else {
 				logs.Info(err)
@@ -150,9 +178,9 @@ func (c *PublicController) Register() {
 	}
 	var resData successData
 	if sessionRequest.Type == 0 {
-		resData = successData{Token: &imToken, User: &user}
+		resData = successData{Token: &imToken,User: &user}
 	} else {
-		resData = successData{Token: &imToken, User: &admin}
+		resData = successData{Token: &imToken,User: &admin}
 	}
 	c.Data["json"] = utils.ResponseSuccess(c.Ctx, "获取成功!", &resData)
 	c.ServeJSON()

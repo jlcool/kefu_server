@@ -8,6 +8,8 @@ package models
 type SessionRequest struct {
 	Type      int    `json:"type"`
 	UID       int64  `orm:"column(uid)" json:"uid"`
+	NickName  string `orm:"column(nickname)" json:"nickname"`
+	Avatar  string `orm:"column(avatar)" json:"avatar"`
 	Platform  int64  `json:"platform"`
 	Address   string `json:"address"`
 	AccountID int64  `orm:"column(account_id)" json:"account_id"`

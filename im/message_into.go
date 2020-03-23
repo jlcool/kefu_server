@@ -58,7 +58,7 @@ func MessageInto(message models.Message, isKF bool) {
 
 	// 判断是否和机器人对话（不处理聊天列表）
 	var r []orm.Params
-	robotCount, _ := o.Raw("SELECT * FROM robot WHERE id IN(?, ?)", message.ToAccount, message.FromAccount).Values(&r)
+	robotCount, _ := o.Raw("SELECT * FROM robot WHERE id IN(?)", message.FromAccount).Values(&r)
 	if robotCount > 0 {
 		return
 	}

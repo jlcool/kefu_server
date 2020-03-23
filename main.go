@@ -101,7 +101,7 @@ func appTask() {
 		if len(im.Robots) > 0 {
 			robot := im.Robots[0]
 			var contacts []models.Contact
-			_, _ = o.Raw("SELECT * FROM `contact` WHERE `create_at` <= ? AND `is_session_end` = 0 AND `last_message_type` != 'timeout'", lastMessageUnixTimer).QueryRows(&contacts)
+			_, _ = o.Raw("SELECT * FROM `contact` WHERE `create_at` <= ? AND `is_session_end` = 0 AND `last_message_type` != 'timeout' and `to_account`!=1", lastMessageUnixTimer).QueryRows(&contacts)
 			logs.Info("清理会话超时用户,有", len(contacts), "个用户被结束对话")
 			for _, contact := range contacts {
 
